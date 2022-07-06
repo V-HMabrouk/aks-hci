@@ -486,8 +486,8 @@
     },
     "variables": {
         "dataDisksCount": 8,
-        "dscUri": "https://github.com/Azure/aks-hci/raw/main/eval/autodeploy/dsc/akshciauto.zip",
-        "artifactsLocation": "https://raw.githubusercontent.com/Azure/aks-hci/main/eval/",
+        "dscUri": "https://github.com/V-HMabrouk/aks-hci/raw/main/eval/autodeploy/dsc/akshciauto.zip",
+        "artifactsLocation": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/main/eval/",
         "randomGUID": "[substring(uniqueString(subscription().subscriptionId, resourceGroup().id, parameters('virtualMachineName')),0,6)]",
         "dnsNameForPublicIP": "[toLower(concat(parameters('virtualMachineName'), variables('randomGUID')))]",
         "environment": "Workgroup",
@@ -510,7 +510,17 @@
         "ps_appSecret": "[concat('base64:', base64(parameters('AKS-HCIAppSecret')))]",
         "subId": "[subscription().subscriptionId]",
         "tenantId": "[subscription().tenantId]",
-        "scriptParameters": "[concat(' -userName ', parameters('adminUsername'), ' -adminUsername ',variables('ps_adminUsername'),' -adminPassword \"',variables('ps_adminPassword'),'\"',' -appId \"',variables('ps appId'),'\"',' -appSecret \"',variables('ps_appSecret'),'\"', ' -rgName \"',resourceGroup().name,'\"',' -location \"',resourceGroup().location,'\"',' -subID \"',variables('subId'),'\"',' -tenantID \"',variables('tenantId'),'\"',' -domainName \"',parameters('domainName'),'\"',' -installWAC \"', parameters('installWindowsAdminCenter'),'\"',' -enableArc \"', parameters('enableArcIntegration'),'\"',' -aksHciNetworking \"',parameters('AKS-HCINetworking'),'\"',' -kubernetesVersion \"',parameters('kubernetesVersion'),'\"',' -controlPlaneNodes ',parameters('controlPlaneNodes'),' -controlPlaneNodeSize \"',parameters('controlPlaneNodeSize'),'\"',' -loadBalancerSize \"',parameters('loadBalancerSize'),'\"',' -linuxWorkerNodes ',parameters('linuxWorkerNodes'),' -linuxWorkerNodeSize \"',parameters('linuxWorkerNodeSize'),'\"',' -windowsWorkerNodes ',parameters('windowsWorkerNodes'),' -windowsWorkerNodeSize \"',parameters('windowsWorkerNodeSize'),'\"')]"
+        "targetClusterName": "[concat('akshciclus-', variables('randomGUID'))]",
+        "scriptParameters": "[concat(' -userName ', parameters('adminUsername'), ' -adminUsername ',variables('ps_adminUsername'),' -adminPassword \"',variables('ps_adminPassword'),'\"',' -appId \"',variables('ps appId'),'\"',' -appSecret \"',variables('ps_appSecret'),'\"', ' -rgName \"',resourceGroup().name,'\"',' -location \"',resourceGroup().location,'\"',' -subID \"',variables('subId'),'\"',' -tenantID \"',variables('tenantId'),'\"',' -domainName \"',parameters('domainName'),'\"',' -installWAC \"', parameters('installWindowsAdminCenter'),'\"',' -enableArc \"', parameters('enableArcIntegration'),'\"',' -aksHciNetworking \"',parameters('AKS-HCINetworking'),'\"',' -kubernetesVersion \"',parameters('kubernetesVersion'),'\"',' -controlPlaneNodes ',parameters('controlPlaneNodes'),' -controlPlaneNodeSize \"',parameters('controlPlaneNodeSize'),'\"',' -loadBalancerSize \"',parameters('loadBalancerSize'),'\"',' -linuxWorkerNodes ',parameters('linuxWorkerNodes'),' -linuxWorkerNodeSize \"',parameters('linuxWorkerNodeSize'),'\"',' -windowsWorkerNodes ',parameters('windowsWorkerNodes'),' -windowsWorkerNodeSize \"',parameters('windowsWorkerNodeSize'), '-targetClusterName \"', variables('targetClusterName') )]",
+		"storageAccountName": "[concat('st', variables('randomGUID'))]",
+		"keyVaultName": "[concat('kv-', variables('randomGUID'))]",
+		"applicationInsightsName": "[concat('appi-', variables('randomGUID'))]",
+		"containerRegistryName": "[concat('cr', variables('randomGUID'))]",
+		"workspaceName": "[concat('mlw', variables('randomGUID'))]",
+		"storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+		"keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+		"applicationInsights": "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+		"containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
     },
     "resources": [
         {
@@ -893,7 +903,92 @@
                     }
                 }
             }
-        }
+        },
+		{
+			"type": "Microsoft.Storage/storageAccounts",
+			"apiVersion": "2021-01-01",
+			"name": "[variables('storageAccountName')]",
+			"location": "[resourceGroup().location]",
+			"sku": {
+				"name": "Standard_RAGRS"
+			},
+			"kind": "StorageV2",
+			"properties": {
+				"encryption": {
+					"services": {
+						"blob": {
+							"enabled": true
+						},
+						"file": {
+							"enabled": true
+						}
+					},
+					"keySource": "Microsoft.Storage"
+				},
+				"supportsHttpsTrafficOnly": true
+			}
+		},
+		{
+			"type": "Microsoft.KeyVault/vaults",
+			"apiVersion": "2021-04-01-preview",
+			"name": "[variables('keyVaultName')]",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"tenantId": "[variables('tenantId')]",
+				"sku": {
+					"name": "standard",
+					"family": "A"
+				},
+				"accessPolicies": [],
+				"enableSoftDelete": true
+			}
+		},
+		{
+			"type": "Microsoft.Insights/components",
+			"apiVersion": "2020-02-02",
+			"name": "[variables('applicationInsightsName')]",
+			"location": "[if(or(equals(resourceGroup().location,'eastus2'), equals(resourceGroup().location,'westcentralus')),'southcentralus',resourceGroup().location)]",
+			"kind": "web",
+			"properties": {
+				"Application_Type": "web"
+			}
+		},
+		{
+			"type": "Microsoft.ContainerRegistry/registries",
+			"sku": {
+				"name": "Standard",
+				"tier": "Standard"
+			},
+			"name": "[variables('containerRegistryName')]",
+			"apiVersion": "2019-12-01-preview",
+			"location": "[resourceGroup().location]",
+			"properties": {
+				"adminUserEnabled": true
+			}
+		},
+		{
+			"type": "Microsoft.MachineLearningServices/workspaces",
+			"apiVersion": "2020-03-01",
+			"identity": {
+				"type": "systemAssigned"
+			},
+			"name": "[variables('workspaceName')]",
+			"location": "[resourceGroup().location]",
+			"dependsOn": [
+				"[variables('storageAccount')]",
+				"[variables('keyVault')]",
+				"[variables('applicationInsights')]",
+				"[variables('containerRegistry')]"
+			],
+			"properties": {
+				"friendlyName": "[variables('workspaceName')]",
+				"storageAccount": "[variables('storageAccount')]",
+				"keyVault": "[variables('keyVault')]",
+				"applicationInsights": "[variables('applicationInsights')]",
+				"containerRegistry": "[variables('containerRegistry')]",
+				"hbiWorkspace": false
+			}
+		}
     ],
     "outputs": {
         "adminUsername": {
