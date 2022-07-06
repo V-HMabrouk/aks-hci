@@ -42,7 +42,9 @@ param
     [Parameter(Mandatory)]
     [int]$windowsWorkerNodes,
     [Parameter(Mandatory)]
-    [string]$windowsWorkerNodeSize
+    [string]$windowsWorkerNodeSize,
+    [Parameter(Mandatory)]
+    [string]$targetClusterName,
 )
 function Log($out) {
     $out = [System.DateTime]::Now.ToString("yyyy.MM.dd hh:mm:ss") + " ---- " + $out;
@@ -163,7 +165,6 @@ try {
         Log 'Defining the network and AKS-HCI configuration'
         $date = (Get-Date).ToString("MMddyy-HHmmss")
         $clusterRoleName = "akshci-mgmt-cluster-$date"
-        $targetClusterName = "akshciclus-$date"
         if ($Using:aksHciNetworking -eq "DHCP") {
             $vnet = New-AksHciNetworkSetting -Name "akshci-main-network" -vSwitchName "InternalNAT" `
                 -vipPoolStart "192.168.0.150" -vipPoolEnd "192.168.0.250"
