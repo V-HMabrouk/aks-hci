@@ -520,7 +520,38 @@
 		"storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
 		"keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
 		"applicationInsights": "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
-		"containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]"
+		"containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
+        "userAssignedIdentityName": "AzureMLExtensionPortalDeployer",
+        "roleAssignmentName": "[guid(concat(resourceGroup().id, 'AzureMLExtensionPortalDeployer'))]",
+        "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "amlDeploymentName": "[concat('AzureMLExtension-', newGuid(), utcNow())]",
+        "configs": {
+            "value": {
+                "clusterObject": {
+                    "name": "akshciclus-070522-014433",
+                    "location": "westeurope",
+                    "raw": ""
+                },
+                "extensionName": "mlextension",
+                "autoUpgrade": false,
+                "nodeSelector": [
+                    {
+                        "name": "",
+                        "value": ""
+                    }
+                ],
+                "enableTraining": true,
+                "enableInference": true,
+                "inferenceRouterServiceType": "loadBalancer",
+                "inferenceLoadBalancerHA": false,
+                "internalLbProvider": "",
+                "allowInsecureConnections": true,
+                "installNvidiaDevicePlugin": false,
+                "installPrometheusOperator": true,
+                "installVolcanoScheduler": true,
+                "installDcgmExporter": false
+            }
+        }
     },
     "resources": [
         {
@@ -988,7 +1019,70 @@
 				"containerRegistry": "[variables('containerRegistry')]",
 				"hbiWorkspace": false
 			}
-		}
+		},
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('userAssignedIdentityName')]",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleAssignmentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('amlDeploymentName')]",
+            "location": "[if(equals(resourceGroup().location, 'eastus2euap'), 'eastus', resourceGroup().location)]",
+            "kind": "AzureCLI",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]"
+            ],
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "environmentVariables": [
+                    {
+                        "name": "AML_CLUSTER_NAME",
+                        "value": "[variables('targetClusterName')]"
+                    },
+                    {
+                        "name": "AML_SUBSCRIPTION",
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    {
+                        "name": "AML_RESOURCE_GROUP",
+                        "value": "[resourceGroup().name]"
+                    },
+                    {
+                        "name": "AML_CONFIGS",
+                        "value": "[base64(string(variables('configs')))]"
+                    }
+                ],
+                "arguments": "",
+                "azCliVersion": "2.34.1",
+                "retentionInterval": "P1D",
+                "primaryScriptUri": "https://raw.githubusercontent.com/Azure/AML-Kubernetes/master/files/entry.sh",
+                "supportingScriptUris": [
+                    "https://raw.githubusercontent.com/Azure/AML-Kubernetes/master/files/deploy.py"
+                ]
+            }
+        }
     ],
     "outputs": {
         "adminUsername": {
@@ -1002,6 +1096,10 @@
         "fqdn": {
             "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]",
             "type": "string"
+        },
+        "result": {
+            "value": "[reference(variables('amlDeploymentName')).outputs]",
+            "type": "object"
         }
     }
 }
