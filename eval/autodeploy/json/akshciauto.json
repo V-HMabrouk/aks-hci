@@ -528,8 +528,8 @@
         "configs": {
             "value": {
                 "clusterObject": {
-                    "name": "akshciclus-070522-014433",
-                    "location": "westeurope",
+                    "name": "[variables('targetClusterName')]",
+                    "location": "[resourceGroup().location]",
                     "raw": ""
                 },
                 "extensionName": "mlextension",
