@@ -44,7 +44,7 @@ param
     [Parameter(Mandatory)]
     [string]$windowsWorkerNodeSize,
     [Parameter(Mandatory)]
-    [string]$targetClusterName,
+    [string]$targetClusterName
 )
 function Log($out) {
     $out = [System.DateTime]::Now.ToString("yyyy.MM.dd hh:mm:ss") + " ---- " + $out;
