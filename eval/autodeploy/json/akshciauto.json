@@ -128,6 +128,12 @@
                 "description": "Enter the Application ID for your Azure AD Service Principal that will be used to integrate AKS on Azure Stack HCI, with Azure"
             }
         },
+        "AKS-HCIAppPrincipalID": {
+            "type": "String",
+            "metadata": {
+                "description": "Enter the corresponding principal ID for your Application"
+            }
+        },
         "AKS-HCIAppSecret": {
             "type": "SecureString",
             "metadata": {
@@ -1049,6 +1055,21 @@
                 "retentionInterval": "P1D",
                 "primaryScriptUri": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/master/eval/autodeploy/scripts/amlextension.sh"
             }
+        },
+        {
+            "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+            "contentVersion": "1.0.0.0",
+            "resources": [
+                {
+                    "type": "Microsoft.Authorization/roleAssignments",
+                    "apiVersion": "2018-09-01-preview",
+                    "name": "[guid(resourceGroup().id)]",
+                    "properties": {
+                        "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+                        "principalId": "[parameters('AKS-HCIAppPrincipalID')]"
+                    }
+                }
+            ]
         }
     ],
     "outputs": {
