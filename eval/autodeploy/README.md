@@ -203,12 +203,8 @@ $spName = "AksHci-SP-$date"
 # Create the Service Principal
 
 $sp = New-AzADServicePrincipal -DisplayName $spName `
-    -Role 'Kubernetes Cluster - Azure Arc Onboarding' `
-    -Scope "/subscriptions/$sub"
-
-New-AzRoleAssignment -ObjectId $sp.Id `
-    -RoleDefinitionName "Virtual Machine Contributor" `
-    -Scope "/subscriptions/$sub"
+     -Role 'Contributor' `
+     -Scope "/subscriptions/$sub"
 
 # Retrieve the password for the Service Principal
 
