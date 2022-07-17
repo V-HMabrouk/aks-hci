@@ -3,14 +3,13 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "virtualMachineName": {
-            "type": "string",
             "defaultValue": "AKSHCIHost001",
+            "type": "String",
             "metadata": {
                 "description": "Keep the VM name to less than 15 characters"
             }
         },
         "virtualMachineSize": {
-            "type": "string",
             "defaultValue": "Standard_E16s_v4",
             "allowedValues": [
                 "Standard_D16s_v3",
@@ -62,50 +61,39 @@
                 "Standard_E64ds_v4",
                 "Standard_E64-16ds_v4",
                 "Standard_E64-32ds_v4"
-            ]
-        },
-        "virtualMachineOS": {
-            "type": "string",
-            "defaultValue": "Windows Server 2022",
-            "allowedValues": [
-                "Windows Server 2019",
-                "Windows Server 2022"
             ],
-            "metadata": {
-                "description": "Select your Azure VM OS, ideally Windows Server 2022."
-            }
+            "type": "String"
         },
         "virtualMachineGeneration": {
-            "type": "string",
             "defaultValue": "Generation 2",
             "allowedValues": [
                 "Generation 1",
                 "Generation 2"
             ],
+            "type": "String",
             "metadata": {
                 "description": "Select your VM generation, ideally Gen 2. Not all Azure regions support Gen 2 VMs."
             }
         },
         "domainName": {
-            "type": "string",
             "defaultValue": "akshci.local",
+            "type": "String",
             "metadata": {
                 "description": "The FQDN that will be used in the environment"
             }
         },
         "dataDiskType": {
-            "type": "string",
             "defaultValue": "StandardSSD_LRS",
             "allowedValues": [
                 "StandardSSD_LRS",
                 "Premium_LRS"
             ],
+            "type": "String",
             "metadata": {
                 "description": "The Storage type of the VM data disk. If your VM contains an 's' in the VM size, you can select Premium_LRS storage for increased performance, but at a higher cost."
             }
         },
         "dataDiskSize": {
-            "type": "string",
             "defaultValue": "32",
             "allowedValues": [
                 "32",
@@ -115,49 +103,234 @@
                 "512",
                 "1024"
             ],
+            "type": "String",
             "metadata": {
                 "description": "The size of the individual data disks in GiB. 8 of these will be provisioned therefore 32GiB is the recommended default."
             }
         },
         "adminUsername": {
-            "type": "string",
-            "defaultValue": "AzureUser"
+            "defaultValue": "AzureUser",
+            "type": "String"
         },
         "adminPassword": {
-            "type": "securestring"
+            "type": "SecureString"
         },
-        "enableDHCP": {
-            "type": "string",
+        "customRdpPort": {
+            "defaultValue": "3389",
+            "type": "String",
+            "metadata": {
+                "description": "If you wish to use a different port to RDP into the VM (between 0 and 65535), change it here, otherwise, leave the default."
+            }
+        },
+        "AKS-HCIAppId": {
+            "type": "String",
+            "metadata": {
+                "description": "Enter the Application ID for your Azure AD Service Principal that will be used to integrate AKS on Azure Stack HCI, with Azure"
+            }
+        },
+        "AKS-HCIAppSecret": {
+            "type": "SecureString",
+            "metadata": {
+                "description": "Enter the corresponding secret for your Application ID"
+            }
+        },
+        "AKS-HCINetworking": {
+            "defaultValue": "DHCP",
+            "allowedValues": [
+                "DHCP",
+                "Static"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose whether you wish to enable DHCP in the environment for AKS-HCI testing, or if you wish to test with a Static IP configuration"
+            }
+        },
+        "kubernetesVersion": {
+            "defaultValue": "Match Management Cluster",
+            "allowedValues": [
+                "Match Management Cluster",
+                "v1.21.2",
+                "v1.21.1",
+                "v1.20.7",
+                "v1.20.5",
+                "v1.19.11",
+                "v1.19.9"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Enter the Kubernetes version for your target cluster. Choosing 'Match Management Cluster' will result in a faster deployment"
+            }
+        },
+        "controlPlaneNodes": {
+            "defaultValue": 1,
+            "allowedValues": [
+                1,
+                3,
+                5
+            ],
+            "type": "Int",
+            "metadata": {
+                "description": "Enter the number of control plane nodes for this target cluster"
+            }
+        },
+        "controlPlaneNodeSize": {
+            "defaultValue": "Standard_A4_v2 (4vCPU, 8GB RAM)",
+            "allowedValues": [
+                "Default (4vCPU, 4GB RAM)",
+                "Standard_A2_v2 (2vCPU, 4GB RAM)",
+                "Standard_A4_v2 (4vCPU, 8GB RAM)",
+                "Standard_D2s_v3 (2vCPU, 8GB RAM)",
+                "Standard_D4s_v3 (4vCPU, 16GB RAM)",
+                "Standard_D8s_v3 (8vCPU, 32GB RAM)",
+                "Standard_D16s_v3 (16vCPU, 64GB RAM)",
+                "Standard_D32s_v3 (32vCPU, 128GB RAM)",
+                "Standard_DS2_v2 (2vCPU, 7GB RAM)",
+                "Standard_DS3_v2 (2vCPU, 14GB RAM)",
+                "Standard_DS4_v2 (8vCPU, 28GB RAM)",
+                "Standard_DS5_v2 (16vCPU, 56GB RAM)",
+                "Standard_DS13_v2 (8vCPU, 56GB RAM)",
+                "Standard_K8S_v1 (4vCPU, 2GB RAM)",
+                "Standard_K8S2_v1 (2vCPU, 2GB RAM)",
+                "Standard_K8S3_v1 (4vCPU, 6GB RAM)"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose the VM size for your control plane nodes for this target cluster. Visit this link for more information about VM sizes: https://docs.microsoft.com/en-us/azure-stack/aks-hci/reference/ps/get-akshcivmsize"
+            }
+        },
+        "loadBalancerSize": {
+            "defaultValue": "Standard_A4_v2 (4vCPU, 8GB RAM)",
+            "allowedValues": [
+                "Default (4vCPU, 4GB RAM)",
+                "Standard_A2_v2 (2vCPU, 4GB RAM)",
+                "Standard_A4_v2 (4vCPU, 8GB RAM)",
+                "Standard_D2s_v3 (2vCPU, 8GB RAM)",
+                "Standard_D4s_v3 (4vCPU, 16GB RAM)",
+                "Standard_D8s_v3 (8vCPU, 32GB RAM)",
+                "Standard_D16s_v3 (16vCPU, 64GB RAM)",
+                "Standard_D32s_v3 (32vCPU, 128GB RAM)",
+                "Standard_DS2_v2 (2vCPU, 7GB RAM)",
+                "Standard_DS3_v2 (2vCPU, 14GB RAM)",
+                "Standard_DS4_v2 (8vCPU, 28GB RAM)",
+                "Standard_DS5_v2 (16vCPU, 56GB RAM)",
+                "Standard_DS13_v2 (8vCPU, 56GB RAM)",
+                "Standard_K8S_v1 (4vCPU, 2GB RAM)",
+                "Standard_K8S2_v1 (2vCPU, 2GB RAM)",
+                "Standard_K8S3_v1 (4vCPU, 6GB RAM)"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose the VM size for your Load Balancer for this target cluster. Visit this link for more information about VM sizes: https://docs.microsoft.com/en-us/azure-stack/aks-hci/reference/ps/get-akshcivmsize"
+            }
+        },
+        "LinuxWorkerNodes": {
+            "defaultValue": 1,
+            "allowedValues": [
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "type": "Int",
+            "metadata": {
+                "description": "Enter the number of Linux worker nodes for this target cluster"
+            }
+        },
+        "LinuxWorkerNodeSize": {
+            "defaultValue": "Standard_K8S3_v1 (4vCPU, 6GB RAM)",
+            "allowedValues": [
+                "Default (4vCPU, 4GB RAM)",
+                "Standard_A2_v2 (2vCPU, 4GB RAM)",
+                "Standard_A4_v2 (4vCPU, 8GB RAM)",
+                "Standard_D2s_v3 (2vCPU, 8GB RAM)",
+                "Standard_D4s_v3 (4vCPU, 16GB RAM)",
+                "Standard_D8s_v3 (8vCPU, 32GB RAM)",
+                "Standard_D16s_v3 (16vCPU, 64GB RAM)",
+                "Standard_D32s_v3 (32vCPU, 128GB RAM)",
+                "Standard_DS2_v2 (2vCPU, 7GB RAM)",
+                "Standard_DS3_v2 (2vCPU, 14GB RAM)",
+                "Standard_DS4_v2 (8vCPU, 28GB RAM)",
+                "Standard_DS5_v2 (16vCPU, 56GB RAM)",
+                "Standard_DS13_v2 (8vCPU, 56GB RAM)",
+                "Standard_K8S_v1 (4vCPU, 2GB RAM)",
+                "Standard_K8S2_v1 (2vCPU, 2GB RAM)",
+                "Standard_K8S3_v1 (4vCPU, 6GB RAM)"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose the VM size for your Linux worker nodes for this target cluster. Visit this link for more information about VM sizes: https://docs.microsoft.com/en-us/azure-stack/aks-hci/reference/ps/get-akshcivmsize"
+            }
+        },
+        "WindowsWorkerNodes": {
+            "defaultValue": 0,
+            "allowedValues": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5
+            ],
+            "type": "Int",
+            "metadata": {
+                "description": "Enter the number of Windows worker nodes for this target cluster"
+            }
+        },
+        "WindowsWorkerNodeSize": {
+            "defaultValue": "Standard_K8S3_v1 (4vCPU, 6GB RAM)",
+            "allowedValues": [
+                "Default (4vCPU, 4GB RAM)",
+                "Standard_A2_v2 (2vCPU, 4GB RAM)",
+                "Standard_A4_v2 (4vCPU, 8GB RAM)",
+                "Standard_D2s_v3 (2vCPU, 8GB RAM)",
+                "Standard_D4s_v3 (4vCPU, 16GB RAM)",
+                "Standard_D8s_v3 (8vCPU, 32GB RAM)",
+                "Standard_D16s_v3 (16vCPU, 64GB RAM)",
+                "Standard_D32s_v3 (32vCPU, 128GB RAM)",
+                "Standard_DS2_v2 (2vCPU, 7GB RAM)",
+                "Standard_DS3_v2 (2vCPU, 14GB RAM)",
+                "Standard_DS4_v2 (8vCPU, 28GB RAM)",
+                "Standard_DS5_v2 (16vCPU, 56GB RAM)",
+                "Standard_DS13_v2 (8vCPU, 56GB RAM)",
+                "Standard_K8S_v1 (4vCPU, 2GB RAM)",
+                "Standard_K8S2_v1 (2vCPU, 2GB RAM)",
+                "Standard_K8S3_v1 (4vCPU, 6GB RAM)"
+            ],
+            "type": "String",
+            "metadata": {
+                "description": "Choose the VM size for your Windows worker nodes for this target cluster. Visit this link for more information about VM sizes: https://docs.microsoft.com/en-us/azure-stack/aks-hci/reference/ps/get-akshcivmsize"
+            }
+        },
+        "installWindowsAdminCenter": {
+            "defaultValue": "No",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "type": "String"
+        },
+        "enableArcIntegration": {
+            "defaultValue": "Yes",
+            "allowedValues": [
+                "Yes",
+                "No"
+            ],
+            "type": "String"
+        },
+        "autoShutdownStatus": {
             "defaultValue": "Enabled",
             "allowedValues": [
                 "Enabled",
                 "Disabled"
             ],
-            "metadata": {
-                "description": "Choose whether you wish to enable DHCP in the environment for AKS-HCI testing. If you choose Disabled, it can be enabled after deployment."
-            }
-        },
-        "customRdpPort": {
-            "type": "string",
-            "defaultValue": "3389",
-            "metadata": {
-                "description": "If you wish to use a different port to RDP into the VM (between 0 and 65535), change it here, otherwise, leave the default."
-            }
-        },
-        "autoShutdownStatus": {
-            "type": "string",
-            "defaultValue": "Enabled",
-            "allowedValues": [
-                "Enabled",
-                "Disabled"
-            ]
+            "type": "String"
         },
         "autoShutdownTime": {
-            "type": "string",
-            "defaultValue": "22:00"
+            "defaultValue": "22:00",
+            "type": "String"
         },
         "autoShutdownTimeZone": {
-            "type": "string",
             "defaultValue": "UTC",
             "allowedValues": [
                 "Afghanistan Standard Time",
@@ -295,15 +468,16 @@
                 "West Bank Standard Time",
                 "West Pacific Standard Time",
                 "Yakutsk Standard Time"
-            ]
+            ],
+            "type": "String"
         },
         "alreadyHaveAWindowsServerLicense": {
-            "type": "string",
             "defaultValue": "No",
             "allowedValues": [
                 "Yes",
                 "No"
             ],
+            "type": "String",
             "metadata": {
                 "description": "By selecting Yes, you confirm you have an eligible Windows Server license with Software Assurance or Windows Server subscription to apply this Azure Hybrid Benefit. You can read more about compliance here: http://go.microsoft.com/fwlink/?LinkId=859786"
             }
@@ -311,8 +485,8 @@
     },
     "variables": {
         "dataDisksCount": 8,
-        "dscUri": "https://github.com/Azure/aks-hci/raw/main/eval/dsc/akshcihost.zip",
-        "artifactsLocation": "https://raw.githubusercontent.com/Azure/aks-hci/main/eval/",
+        "dscUri": "https://github.com/V-HMabrouk/aks-hci/raw/main/eval/autodeploy/dsc/akshciauto.zip",
+        "artifactsLocation": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/main/eval/",
         "randomGUID": "[substring(uniqueString(subscription().subscriptionId, resourceGroup().id, parameters('virtualMachineName')),0,6)]",
         "dnsNameForPublicIP": "[toLower(concat(parameters('virtualMachineName'), variables('randomGUID')))]",
         "environment": "Workgroup",
@@ -328,14 +502,34 @@
         "publicIpAddressSku": "Basic",
         "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
         "subnetRef": "[concat(variables('vnetId'), '/subnets/', variables('subnetName'))]",
-        "vmSkuGen1": "[if(equals(parameters('virtualMachineOS'), 'Windows Server 2022'), '2022-datacenter', '2019-datacenter')]",
-        "vmSkuGen2": "[if(equals(parameters('virtualMachineOS'), 'Windows Server 2022'), '2022-datacenter-g2', '2019-datacenter-gensecond')]"
+        "dscName": "[if(equals(parameters('installWindowsAdminCenter'), 'Yes'), 'ConfigureAksHciHostWithWac', 'ConfigureAksHciHost')]",
+        "ps_adminUsername": "[concat('base64:', base64(parameters('adminUsername')))]",
+        "ps_adminPassword": "[concat('base64:', base64(parameters('adminPassword')))]",
+        "ps appId": "[concat('base64:', base64(parameters('AKS-HCIAppId')))]",
+        "ps_appSecret": "[concat('base64:', base64(parameters('AKS-HCIAppSecret')))]",
+        "subId": "[subscription().subscriptionId]",
+        "tenantId": "[subscription().tenantId]",
+        "targetClusterName": "[concat('akshciclus-', 'demo')]",
+        "scriptParameters": "[concat(' -userName ', parameters('adminUsername'), ' -adminUsername ',variables('ps_adminUsername'),' -adminPassword \"',variables('ps_adminPassword'),'\"',' -appId \"',variables('ps appId'),'\"',' -appSecret \"',variables('ps_appSecret'),'\"', ' -rgName \"',resourceGroup().name,'\"',' -location \"',resourceGroup().location,'\"',' -subID \"',variables('subId'),'\"',' -tenantID \"',variables('tenantId'),'\"',' -domainName \"',parameters('domainName'),'\"',' -installWAC \"', parameters('installWindowsAdminCenter'),'\"',' -enableArc \"', parameters('enableArcIntegration'),'\"',' -aksHciNetworking \"',parameters('AKS-HCINetworking'),'\"',' -kubernetesVersion \"',parameters('kubernetesVersion'),'\"',' -controlPlaneNodes ',parameters('controlPlaneNodes'),' -controlPlaneNodeSize \"',parameters('controlPlaneNodeSize'),'\"',' -loadBalancerSize \"',parameters('loadBalancerSize'),'\"',' -linuxWorkerNodes ',parameters('linuxWorkerNodes'),' -linuxWorkerNodeSize \"',parameters('linuxWorkerNodeSize'),'\"',' -windowsWorkerNodes ',parameters('windowsWorkerNodes'),' -windowsWorkerNodeSize \"',parameters('windowsWorkerNodeSize'),'\"')]",
+        "storageAccountName": "[concat('st', variables('randomGUID'))]",
+        "keyVaultName": "[concat('kv-', variables('randomGUID'))]",
+        "applicationInsightsName": "[concat('appi-', variables('randomGUID'))]",
+        "containerRegistryName": "[concat('cr', variables('randomGUID'))]",
+        "workspaceName": "[concat('mlw-', variables('randomGUID'))]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
+        "userAssignedIdentityName": "AzureMLExtensionPortalDeployer",
+        "roleAssignmentName": "[guid(concat(resourceGroup().id, 'AzureMLExtensionPortalDeployer'))]",
+        "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "amlDeploymentName": "[concat('AzureMLExtension-', variables('randomGUID'))]"
     },
     "resources": [
         {
-            "name": "[variables('publicIpAddressName')]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2020-11-01",
+            "name": "[variables('publicIpAddressName')]",
             "location": "[resourceGroup().location]",
             "sku": {
                 "name": "[variables('publicIpAddressSku')]"
@@ -349,12 +543,12 @@
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
+            "apiVersion": "2020-06-01",
             "name": "[variables('virtualNetworkName')]",
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(variables('artifactsLocation'), concat('json/vnet.json'))]",
+                    "uri": "[uri(variables('artifactsLocation'), concat('autodeploy/json/vnet.json'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -377,9 +571,9 @@
             }
         },
         {
-            "name": "[variables('networkInterfaceName')]",
             "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('networkInterfaceName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[variables('virtualNetworkName')]",
@@ -408,9 +602,9 @@
             }
         },
         {
-            "name": "[variables('networkSecurityGroupName')]",
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2020-05-01",
+            "name": "[variables('networkSecurityGroupName')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "securityRules": [
@@ -431,9 +625,9 @@
             }
         },
         {
-            "name": "[parameters('virtualMachineName')]",
             "type": "Microsoft.Compute/virtualMachines",
-            "apiVersion": "2021-03-01",
+            "apiVersion": "2020-06-01",
+            "name": "[parameters('virtualMachineName')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[concat('Microsoft.Network/networkInterfaces/', variables('networkInterfaceName'))]"
@@ -454,7 +648,7 @@
                     "imageReference": {
                         "publisher": "MicrosoftWindowsServer",
                         "offer": "WindowsServer",
-                        "sku": "[if(equals(parameters('virtualMachineGeneration'), 'Generation 2'), variables('vmSkuGen2'), variables('vmSkuGen1'))]",
+                        "sku": "[if(equals(parameters('virtualMachineGeneration'), 'Generation 2'), '2019-datacenter-gensecond', '2019-Datacenter')]",
                         "version": "latest"
                     },
                     "osDisk": {
@@ -497,8 +691,8 @@
             "resources": [
                 {
                     "type": "extensions",
-                    "name": "InstallWAC",
                     "apiVersion": "2021-03-01",
+                    "name": "InstallWindowsAdminCenter",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[parameters('virtualMachineName')]"
@@ -514,18 +708,39 @@
                             ]
                         },
                         "protectedSettings": {
-                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File installWac.ps1', ' -userName ', parameters('adminUsername'))]"
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File installWac.ps1')]"
                         }
-                    }
+                    },
+                    "condition": "[equals(parameters('installWindowsAdminCenter'),'Yes')]"
                 },
                 {
-                    "type": "extensions",
-                    "name": "ConfigureAksHciHost",
-                    "apiVersion": "2021-03-01",
+                    "type": "Microsoft.Resources/deploymentScripts",
+                    "apiVersion": "2020-10-01",
+                    "name": "CustomScriptCleanup",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[parameters('virtualMachineName')]",
-                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallWAC')]"
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallWindowsAdminCenter')]"
+                    ],
+                    "kind": "AzurePowerShell",
+                    "properties": {
+                        "azPowerShellVersion": "6.3",
+                        "retentionInterval": "P1D",
+                        "timeout": "PT30M",
+                        "arguments": "[format(' -resourceGroupName {0} -vmName {1} -subscriptionId {2} -tenantId {3} -appId {4} -appSecret {5}', resourceGroup().name, parameters('virtualMachineName'), variables('subId'), variables('tenantId'),parameters('AKS-HCIAppId'), variables('ps_appSecret'))]",
+                        "primaryScriptURI": "[uri(variables('artifactsLocation'), concat('autodeploy/scripts/removeCustomScript.ps1'))]"
+                    },
+                    "condition": "[equals(parameters('installWindowsAdminCenter'),'Yes')]"
+                },
+                {
+                    "type": "extensions",
+                    "apiVersion": "2021-03-01",
+                    "name": "ConfigureAksHciHostWithWac",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[parameters('virtualMachineName')]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallWindowsAdminCenter')]",
+                        "[resourceId('Microsoft.Resources/deploymentScripts', 'CustomScriptCleanup')]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
@@ -536,33 +751,115 @@
                             "wmfVersion": "latest",
                             "configuration": {
                                 "url": "[variables('dscUri')]",
-                                "script": "akshcihost.ps1",
-                                "function": "AKSHCIHost"
+                                "script": "akshciauto.ps1",
+                                "function": "AksHciAutoDeploy"
                             },
                             "configurationArguments": {
-                                "DomainName": "[parameters('domainName')]",
+                                "installWAC": "[parameters('installWindowsAdminCenter')]",
+                                "domainName": "[parameters('domainName')]",
                                 "environment": "[variables('environment')]",
-                                "enableDHCP": "[parameters('enableDHCP')]",
-                                "customRdpPort": "[parameters('customRdpPort')]"
+                                "aksHciNetworking": "[parameters('AKS-HCINetworking')]",
+                                "customRdpPort": "[parameters('customRdpPort')]",
+                                "controlPlaneNodes": "[parameters('ControlPlaneNodes')]",
+                                "controlPlaneNodeSize": "[parameters('ControlPlaneNodeSize')]",
+                                "loadBalancerSize": "[parameters('LoadBalancerSize')]",
+                                "linuxWorkerNodes": "[parameters('LinuxWorkerNodes')]",
+                                "linuxWorkerNodeSize": "[parameters('LinuxWorkerNodeSize')]",
+                                "windowsWorkerNodes": "[parameters('WindowsWorkerNodes')]",
+                                "windowsWorkerNodeSize": "[parameters('WindowsWorkerNodeSize')]"
                             }
                         },
                         "protectedSettings": {
                             "configurationArguments": {
                                 "adminCreds": {
-                                    "UserName": "[parameters('adminUsername')]",
-                                    "Password": "[parameters('adminPassword')]"
+                                    "username": "[parameters('adminUsername')]",
+                                    "password": "[parameters('adminPassword')]"
                                 }
                             }
+                        }
+                    },
+                    "condition": "[equals(parameters('installWindowsAdminCenter'),'Yes')]"
+                },
+                {
+                    "type": "extensions",
+                    "apiVersion": "2021-03-01",
+                    "name": "ConfigureAksHciHost",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[parameters('virtualMachineName')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Powershell",
+                        "type": "DSC",
+                        "typeHandlerVersion": "2.77",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "wmfVersion": "latest",
+                            "configuration": {
+                                "url": "[variables('dscUri')]",
+                                "script": "akshciauto.ps1",
+                                "function": "AksHciAutoDeploy"
+                            },
+                            "configurationArguments": {
+                                "installWAC": "[parameters('installWindowsAdminCenter')]",
+                                "domainName": "[parameters('domainName')]",
+                                "environment": "[variables('environment')]",
+                                "aksHciNetworking": "[parameters('AKS-HCINetworking')]",
+                                "customRdpPort": "[parameters('customRdpPort')]",
+                                "controlPlaneNodes": "[parameters('ControlPlaneNodes')]",
+                                "controlPlaneNodeSize": "[parameters('ControlPlaneNodeSize')]",
+                                "loadBalancerSize": "[parameters('LoadBalancerSize')]",
+                                "linuxWorkerNodes": "[parameters('LinuxWorkerNodes')]",
+                                "linuxWorkerNodeSize": "[parameters('LinuxWorkerNodeSize')]",
+                                "windowsWorkerNodes": "[parameters('WindowsWorkerNodes')]",
+                                "windowsWorkerNodeSize": "[parameters('WindowsWorkerNodeSize')]"
+                            }
+                        },
+                        "protectedSettings": {
+                            "configurationArguments": {
+                                "adminCreds": {
+                                    "username": "[parameters('adminUsername')]",
+                                    "password": "[parameters('adminPassword')]"
+                                }
+                            }
+                        }
+                    },
+                    "condition": "[equals(parameters('installWindowsAdminCenter'),'No')]"
+                },
+                {
+                    "type": "extensions",
+                    "apiVersion": "2021-03-01",
+                    "name": "InstallAksHci",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[parameters('virtualMachineName')]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), variables('dscName'))]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.10",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[uri(variables('artifactsLocation'), concat('autodeploy/scripts/installAksHci.ps1'))]"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File installAksHci.ps1',variables('scriptParameters'))]"
                         }
                     }
                 }
             ]
         },
         {
-            "name": "[concat('shutdown-computevm-', parameters('virtualMachineName'))]",
             "type": "Microsoft.DevTestLab/schedules",
             "apiVersion": "2018-09-15",
+            "name": "[concat('shutdown-computevm-', parameters('virtualMachineName'))]",
             "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
+            ],
             "properties": {
                 "status": "[parameters('autoShutdownStatus')]",
                 "taskType": "ComputeVmShutdownTask",
@@ -571,22 +868,19 @@
                 },
                 "timeZoneId": "[parameters('autoShutdownTimeZone')]",
                 "targetResourceId": "[resourceId('Microsoft.Compute/virtualMachines', parameters('virtualMachineName'))]"
-            },
-            "dependsOn": [
-                "[concat('Microsoft.Compute/virtualMachines/', parameters('virtualMachineName'))]"
-            ]
+            }
         },
         {
             "type": "Microsoft.Resources/deployments",
-            "apiVersion": "2021-04-01",
+            "apiVersion": "2020-06-01",
             "name": "[concat(variables('virtualNetworkName'),'-UpdateDNS')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'ConfigureAksHciHost')]"
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), variables('dscName'))]"
             ],
             "properties": {
                 "mode": "Incremental",
                 "templateLink": {
-                    "uri": "[uri(variables('artifactsLocation'), concat('json/updatevnet.json'))]",
+                    "uri": "[uri(variables('artifactsLocation'), concat('autodeploy/json/updatevnet.json'))]",
                     "contentVersion": "1.0.0.0"
                 },
                 "parameters": {
@@ -612,20 +906,163 @@
                     }
                 }
             }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-01-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_RAGRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2021-04-01-preview",
+            "name": "[variables('keyVaultName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[variables('tenantId')]",
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                },
+                "accessPolicies": [],
+                "enableSoftDelete": true
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[variables('applicationInsightsName')]",
+            "location": "[if(or(equals(resourceGroup().location,'eastus2'), equals(resourceGroup().location,'westcentralus')),'southcentralus',resourceGroup().location)]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2019-12-01-preview",
+            "name": "[variables('containerRegistryName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            }
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2020-03-01",
+            "name": "[variables('workspaceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('storageAccount')]",
+                "[variables('keyVault')]",
+                "[variables('applicationInsights')]",
+                "[variables('containerRegistry')]"
+            ],
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "properties": {
+                "friendlyName": "[variables('workspaceName')]",
+                "storageAccount": "[variables('storageAccount')]",
+                "keyVault": "[variables('keyVault')]",
+                "applicationInsights": "[variables('applicationInsights')]",
+                "containerRegistry": "[variables('containerRegistry')]",
+                "hbiWorkspace": false
+            }
+        },
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('userAssignedIdentityName')]",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleAssignmentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('amlDeploymentName')]",
+            "location": "[if(equals(resourceGroup().location, 'eastus2euap'), 'eastus', resourceGroup().location)]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]",
+                "[parameters('virtualMachineName')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'),'InstallAksHci')]"
+            ],
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "environmentVariables": [
+                    {
+                        "name": "AML_CLUSTER_NAME",
+                        "value": "[variables('targetClusterName')]"
+                    },
+                    {
+                        "name": "AML_SUBSCRIPTION",
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    {
+                        "name": "AML_RESOURCE_GROUP",
+                        "value": "[resourceGroup().name]"
+                    }
+                ],
+                "arguments": "",
+                "azCliVersion": "2.34.1",
+                "retentionInterval": "P1D",
+                "primaryScriptUri": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/master/eval/autodeploy/scripts/amlextension.sh"
+            }
         }
     ],
     "outputs": {
         "adminUsername": {
-            "type": "string",
+            "type": "String",
             "value": "[parameters('adminUsername')]"
         },
         "rdpPort": {
-            "type": "string",
+            "type": "String",
             "value": "[parameters('customRdpPort')]"
         },
         "fqdn": {
-            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]",
-            "type": "string"
+            "type": "String",
+            "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses',variables('publicIPAddressName'))).dnsSettings.fqdn]"
         }
     }
 }
