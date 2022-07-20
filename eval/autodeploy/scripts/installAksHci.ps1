@@ -156,11 +156,6 @@ try {
 
         ### INITIALIZE AKS-HCI ###
         Log 'Initializing AKS-HCI'
-        Set-PSRepository -Name "PSGallery" -InstallationPolicy Trusted
-        Install-PackageProvider -Name NuGet -Force 
-        Install-Module -Name PowershellGet -Force
-        Install-Module -Name AksHci -Repository PSGallery -AcceptLicense -Force
-        Import-Module AksHci
         Initialize-AksHciNode
         Log "Initialization completed"
 
