@@ -488,14 +488,6 @@
                 "description": "Choose the VM size for your Windows worker nodes for this target cluster. Visit this link for more information about VM sizes: https://docs.microsoft.com/en-us/azure-stack/aks-hci/reference/ps/get-akshcivmsize"
             }
         },
-        "installWindowsAdminCenter": {
-            "defaultValue": "No",
-            "allowedValues": [
-                "Yes",
-                "No"
-            ],
-            "type": "String"
-        },
         "enableArcIntegration": {
             "defaultValue": "Yes",
             "allowedValues": [
@@ -532,7 +524,21 @@
         "ps_appSecret": "[concat('base64:', base64(parameters('AKS-HCIAppSecret')))]",
         "subId": "[subscription().subscriptionId]",
         "tenantId": "[subscription().tenantId]",
-        "scriptParameters": "[concat(' -userName ', parameters('adminUsername'), ' -adminUsername ',variables('ps_adminUsername'),' -adminPassword \"',variables('ps_adminPassword'),'\"',' -appId \"',variables('ps appId'),'\"',' -appSecret \"',variables('ps_appSecret'),'\"', ' -rgName \"',resourceGroup().name,'\"',' -location \"',resourceGroup().location,'\"',' -subID \"',variables('subId'),'\"',' -tenantID \"',variables('tenantId'),'\"',' -domainName \"',parameters('domainName'),'\"',' -installWAC \"', parameters('installWindowsAdminCenter'),'\"',' -enableArc \"', parameters('enableArcIntegration'),'\"',' -aksHciNetworking \"',parameters('AKS-HCINetworking'),'\"',' -kubernetesVersion \"',parameters('kubernetesVersion'),'\"',' -controlPlaneNodes ',parameters('controlPlaneNodes'),' -controlPlaneNodeSize \"',parameters('controlPlaneNodeSize'),'\"',' -loadBalancerSize \"',parameters('loadBalancerSize'),'\"',' -linuxWorkerNodes ',parameters('linuxWorkerNodes'),' -linuxWorkerNodeSize \"',parameters('linuxWorkerNodeSize'),'\"',' -windowsWorkerNodes ',parameters('windowsWorkerNodes'),' -windowsWorkerNodeSize \"',parameters('windowsWorkerNodeSize'),'\"')]"
+        "targetClusterName": "[concat('akshciclus-', 'demo')]",
+        "scriptParameters": "[concat(' -userName ', parameters('adminUsername'), ' -adminUsername ',variables('ps_adminUsername'),' -adminPassword \"',variables('ps_adminPassword'),'\"',' -appId \"',variables('ps appId'),'\"',' -appSecret \"',variables('ps_appSecret'),'\"', ' -rgName \"',resourceGroup().name,'\"',' -location \"',resourceGroup().location,'\"',' -subID \"',variables('subId'),'\"',' -tenantID \"',variables('tenantId'),'\"',' -domainName \"',parameters('domainName'),'\"',' -installWAC \"', 'Yes','\"',' -enableArc \"', parameters('enableArcIntegration'),'\"',' -aksHciNetworking \"',parameters('AKS-HCINetworking'),'\"',' -kubernetesVersion \"',parameters('kubernetesVersion'),'\"',' -controlPlaneNodes ',parameters('controlPlaneNodes'),' -controlPlaneNodeSize \"',parameters('controlPlaneNodeSize'),'\"',' -loadBalancerSize \"',parameters('loadBalancerSize'),'\"',' -linuxWorkerNodes ',parameters('linuxWorkerNodes'),' -linuxWorkerNodeSize \"',parameters('linuxWorkerNodeSize'),'\"',' -windowsWorkerNodes ',parameters('windowsWorkerNodes'),' -windowsWorkerNodeSize \"',parameters('windowsWorkerNodeSize'),'\"')]",
+        "storageAccountName": "[concat('st', variables('randomGUID'))]",
+        "keyVaultName": "[concat('kv-', variables('randomGUID'))]",
+        "applicationInsightsName": "[concat('appi-', variables('randomGUID'))]",
+        "containerRegistryName": "[concat('cr', variables('randomGUID'))]",
+        "workspaceName": "[concat('mlw-', variables('randomGUID'))]",
+        "storageAccount": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+        "keyVault": "[resourceId('Microsoft.KeyVault/vaults', variables('keyVaultName'))]",
+        "applicationInsights": "[resourceId('Microsoft.Insights/components', variables('applicationInsightsName'))]",
+        "containerRegistry": "[resourceId('Microsoft.ContainerRegistry/registries', variables('containerRegistryName'))]",
+        "userAssignedIdentityName": "AzureMLExtensionPortalDeployer",
+        "roleAssignmentName": "[guid(concat(resourceGroup().id, 'AzureMLExtensionPortalDeployer'))]",
+        "contributorRoleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]",
+        "amlDeploymentName": "[concat('AzureMLExtension-', variables('randomGUID'))]"
     },
     "resources": [
         {
@@ -612,25 +618,11 @@
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-11-01",
+            "apiVersion": "2020-05-01",
             "name": "[variables('networkSecurityGroupName')]",
             "location": "[resourceGroup().location]",
             "properties": {
-                "securityRules": [
-                    {
-                        "name": "rdp",
-                        "properties": {
-                            "priority": 1000,
-                            "protocol": "Tcp",
-                            "access": "Allow",
-                            "direction": "Inbound",
-                            "sourceAddressPrefix": "*",
-                            "sourcePortRange": "*",
-                            "destinationAddressPrefix": "*",
-                            "destinationPortRange": "[parameters('customRdpPort')]"
-                        }
-                    }
-                ]
+                "securityRules": []
             }
         },
         {
@@ -762,7 +754,7 @@
                                 "function": "AksHciAutoDeploy"
                             },
                             "configurationArguments": {
-                                "installWAC": "[parameters('installWindowsAdminCenter')]",
+                                "installWAC": "Yes",
                                 "domainName": "[parameters('domainName')]",
                                 "environment": "[variables('environment')]",
                                 "aksHciNetworking": "[parameters('AKS-HCINetworking')]",
@@ -865,6 +857,149 @@
                         "value": "[resourceGroup().location]"
                     }
                 }
+            }
+        },
+        {
+            "type": "Microsoft.Storage/storageAccounts",
+            "apiVersion": "2021-01-01",
+            "name": "[variables('storageAccountName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard_RAGRS"
+            },
+            "kind": "StorageV2",
+            "properties": {
+                "encryption": {
+                    "services": {
+                        "blob": {
+                            "enabled": true
+                        },
+                        "file": {
+                            "enabled": true
+                        }
+                    },
+                    "keySource": "Microsoft.Storage"
+                },
+                "supportsHttpsTrafficOnly": true
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults",
+            "apiVersion": "2021-04-01-preview",
+            "name": "[variables('keyVaultName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "tenantId": "[variables('tenantId')]",
+                "sku": {
+                    "name": "standard",
+                    "family": "A"
+                },
+                "accessPolicies": [],
+                "enableSoftDelete": true
+            }
+        },
+        {
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2020-02-02",
+            "name": "[variables('applicationInsightsName')]",
+            "location": "[if(or(equals(resourceGroup().location,'eastus2'), equals(resourceGroup().location,'westcentralus')),'southcentralus',resourceGroup().location)]",
+            "kind": "web",
+            "properties": {
+                "Application_Type": "web"
+            }
+        },
+        {
+            "type": "Microsoft.ContainerRegistry/registries",
+            "apiVersion": "2019-12-01-preview",
+            "name": "[variables('containerRegistryName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard",
+                "tier": "Standard"
+            },
+            "properties": {
+                "adminUserEnabled": true
+            }
+        },
+        {
+            "type": "Microsoft.MachineLearningServices/workspaces",
+            "apiVersion": "2020-03-01",
+            "name": "[variables('workspaceName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[variables('storageAccount')]",
+                "[variables('keyVault')]",
+                "[variables('applicationInsights')]",
+                "[variables('containerRegistry')]"
+            ],
+            "identity": {
+                "type": "systemAssigned"
+            },
+            "properties": {
+                "friendlyName": "[variables('workspaceName')]",
+                "storageAccount": "[variables('storageAccount')]",
+                "keyVault": "[variables('keyVault')]",
+                "applicationInsights": "[variables('applicationInsights')]",
+                "containerRegistry": "[variables('containerRegistry')]",
+                "hbiWorkspace": false
+            }
+        },
+        {
+            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+            "apiVersion": "2018-11-30",
+            "name": "[variables('userAssignedIdentityName')]",
+            "location": "[resourceGroup().location]"
+        },
+        {
+            "type": "Microsoft.Authorization/roleAssignments",
+            "apiVersion": "2020-04-01-preview",
+            "name": "[variables('roleAssignmentName')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('contributorRoleDefinitionId')]",
+                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', variables('userAssignedIdentityName')), '2015-08-31-preview').principalId]",
+                "scope": "[resourceGroup().id]",
+                "principalType": "ServicePrincipal"
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "[variables('amlDeploymentName')]",
+            "location": "[if(equals(resourceGroup().location, 'eastus2euap'), 'eastus', resourceGroup().location)]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Authorization/roleAssignments', variables('roleAssignmentName'))]",
+                "[parameters('virtualMachineName')]",
+                "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'),'InstallAksHci')]"
+            ],
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('userAssignedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "environmentVariables": [
+                    {
+                        "name": "AML_CLUSTER_NAME",
+                        "value": "[variables('targetClusterName')]"
+                    },
+                    {
+                        "name": "AML_SUBSCRIPTION",
+                        "value": "[subscription().subscriptionId]"
+                    },
+                    {
+                        "name": "AML_RESOURCE_GROUP",
+                        "value": "[resourceGroup().name]"
+                    }
+                ],
+                "arguments": "",
+                "azCliVersion": "2.34.1",
+                "retentionInterval": "P1D",
+                "primaryScriptUri": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/master/eval/autodeploy/scripts/amlextension.sh"
             }
         }
     ],
