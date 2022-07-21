@@ -734,12 +734,55 @@
                 {
                     "type": "extensions",
                     "apiVersion": "2021-03-01",
-                    "name": "ConfigureAksHciHost",
+                    "name": "InstallInnerVM",
                     "location": "[resourceGroup().location]",
                     "dependsOn": [
                         "[parameters('virtualMachineName')]",
                         "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallWindowsAdminCenter')]",
                         "[resourceId('Microsoft.Resources/deploymentScripts', 'CustomScriptCleanup')]"
+                    ],
+                    "properties": {
+                        "publisher": "Microsoft.Compute",
+                        "type": "CustomScriptExtension",
+                        "typeHandlerVersion": "1.10",
+                        "autoUpgradeMinorVersion": true,
+                        "settings": {
+                            "fileUris": [
+                                "[uri(variables('artifactsLocation'), concat('autodeploy/scripts/vminstallation.ps1'))]"
+                            ]
+                        },
+                        "protectedSettings": {
+                            "commandToExecute": "[concat('powershell -ExecutionPolicy Unrestricted -File vminstallation.ps1', ' -userName ', parameters('adminUsername'))]"
+                        }
+                    }
+                },
+                {
+                    "type": "Microsoft.Resources/deploymentScripts",
+                    "apiVersion": "2020-10-01",
+                    "name": "VMCustomScriptCleanup",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[parameters('virtualMachineName')]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallInnerVM')]"
+                    ],
+                    "kind": "AzurePowerShell",
+                    "properties": {
+                        "azPowerShellVersion": "6.3",
+                        "retentionInterval": "P1D",
+                        "timeout": "PT30M",
+                        "arguments": "[format(' -resourceGroupName {0} -vmName {1} -subscriptionId {2} -tenantId {3} -appId {4} -appSecret {5}', resourceGroup().name, parameters('virtualMachineName'), variables('subId'), variables('tenantId'),parameters('AKS-HCIAppId'), variables('ps_appSecret'))]",
+                        "primaryScriptURI": "[uri(variables('artifactsLocation'), concat('autodeploy/scripts/removeInnerVMCustomScript.ps1'))]"
+                    }
+                },
+                {
+                    "type": "extensions",
+                    "apiVersion": "2021-03-01",
+                    "name": "ConfigureAksHciHost",
+                    "location": "[resourceGroup().location]",
+                    "dependsOn": [
+                        "[parameters('virtualMachineName')]",
+                        "[resourceId('Microsoft.Compute/virtualMachines/extensions', parameters('virtualMachineName'), 'InstallInnerVM')]",
+                        "[resourceId('Microsoft.Resources/deploymentScripts', 'VMCustomScriptCleanup')]"
                     ],
                     "properties": {
                         "publisher": "Microsoft.Powershell",
