@@ -1,3 +1,4 @@
+[CmdletBinding()]
 $Server = "Ubuntu"               #Create VM name as Windows10
 $ServerRAM = 1GB                    #Set RAM size to 1 GB
 $ServerVHD = 60GB                   #Set VHD size to 80GB
