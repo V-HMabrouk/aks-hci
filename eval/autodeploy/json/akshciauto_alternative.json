@@ -499,7 +499,7 @@
     },
     "variables": {
         "dataDisksCount": 8,
-        "dscUri": "https://github.com/V-HMabrouk/aks-hci/raw/main/eval/autodeploy/dsc/akshciauto.zip",
+        "dscUri": "https://github.com/V-HMabrouk/aks-hci/raw/main/eval/autodeploy/dsc/akshciauto_alternative.zip",
         "artifactsLocation": "https://raw.githubusercontent.com/V-HMabrouk/aks-hci/main/eval/",
         "randomGUID": "[substring(uniqueString(subscription().subscriptionId, resourceGroup().id, parameters('virtualMachineName')),0,6)]",
         "dnsNameForPublicIP": "[toLower(concat(parameters('virtualMachineName'), variables('randomGUID')))]",
