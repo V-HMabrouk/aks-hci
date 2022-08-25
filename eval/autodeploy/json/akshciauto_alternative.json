@@ -120,7 +120,7 @@
             }
         },
         "adminUsername": {
-            "defaultValue": "AzureUser",
+            "defaultValue": "AzureAdmin",
             "type": "String"
         },
         "adminPassword": {
@@ -145,7 +145,7 @@
             }
         },
         "autoShutdownStatus": {
-            "defaultValue": "Enabled",
+            "defaultValue": "Disabled",
             "allowedValues": [
                 "Enabled",
                 "Disabled"
@@ -410,7 +410,7 @@
             }
         },
         "LinuxWorkerNodes": {
-            "defaultValue": 1,
+            "defaultValue": 3,
             "allowedValues": [
                 1,
                 2,
